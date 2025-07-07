@@ -61,7 +61,7 @@ class FacilityBloc extends Bloc<FacilityEvent, FacilityState> {
     on<SearchFacilities>((event, emit) async {
       final query = event.query.toLowerCase();
       final results = _allFacilities
-          .where((f) => f.name.toLowerCase().contains(query))
+          .where((f) => f.name!.toLowerCase().contains(query))
           .toList();
       emit(FacilityLoaded(results));
     });

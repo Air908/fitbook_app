@@ -94,12 +94,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     facilities: state.pendingFacilities,
                     onApprove: (facility) {
                       context.read<AdminBloc>().add(
-                        ApproveFacility(facility.id),
+                        ApproveFacility(facility?.id??""),
                       );
                     },
                     onReject: (facility) {
                       context.read<AdminBloc>().add(
-                        RejectFacility(facility.id),
+                        RejectFacility(facility?.id??""),
                       );
                     },
                   ),

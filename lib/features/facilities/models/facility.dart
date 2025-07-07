@@ -1,32 +1,32 @@
 // models/facility.dart
 
 class Facility {
-  final String id;
-  final String name;
-  final String location;
-  final String description;
-  final String imageUrl; // Deprecated in favor of images
-  final List<String> images;
-  final String city;
-  final String state;
-  final String facilityType;
-  final double averageRating;
-  final int totalReviews;
-  final double pricingPerHour;
+  final String? id;
+  final String? name;
+  final String? location;
+  final String? description;
+  final String? imageUrl; // Deprecated in favor of images
+  final List<String>? images;
+  final String? city;
+  final String? state;
+  final String? facilityType;
+  final double? averageRating;
+  final int? totalReviews;
+  final double? pricingPerHour;
 
   Facility({
-    required this.id,
-    required this.name,
-    required this.location,
-    required this.description,
-    required this.imageUrl,
-    required this.images,
-    required this.city,
-    required this.state,
-    required this.facilityType,
-    required this.averageRating,
-    required this.totalReviews,
-    required this.pricingPerHour,
+     this.id,
+     this.name,
+     this.location,
+     this.description,
+     this.imageUrl,
+     this.images,
+     this.city,
+     this.state,
+     this.facilityType,
+     this.averageRating,
+     this.totalReviews,
+     this.pricingPerHour,
   });
 
   factory Facility.fromJson(Map<String, dynamic> json) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../facilities/models/facility.dart';
 import '../bloc/admin_bloc.dart'; // Make sure the Facility model is accessible
 
 class FacilityApprovalList extends StatelessWidget {
@@ -27,7 +28,7 @@ class FacilityApprovalList extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: ListTile(
             leading: const Icon(Icons.business, color: Colors.blue),
-            title: Text(facility.name),
+            title: Text(facility?.name??""),
             subtitle: Text('ID: ${facility.id}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,

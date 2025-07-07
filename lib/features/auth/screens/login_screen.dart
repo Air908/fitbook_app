@@ -84,7 +84,11 @@ class _LoginScreenState extends State<LoginScreen>
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            Navigator.pushReplacementNamed(context, '/home');
+            if(state.user.userMetadata?["role"]?.toLowerCase()=="user") {
+              Navigator.pushReplacementNamed(context, '/home', arguments: state);
+            } else if (state.user.userMetadata?["role"]?.toLowerCase()=="admin"){
+              Navigator.pushReplacementNamed(context, '/home',arguments: state);
+            }
           } else if (state is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

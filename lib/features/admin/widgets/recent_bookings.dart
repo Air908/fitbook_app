@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../booking/models/booking.dart';
 import '../bloc/admin_bloc.dart'; // Make sure Booking model is accessible
 
 class RecentBookings extends StatelessWidget {
@@ -20,7 +21,7 @@ class RecentBookings extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ListTile(
             leading: const Icon(Icons.calendar_today, color: Colors.deepPurple),
-            title: Text('${booking.user} booked ${booking.facility}'),
+            title: Text('${booking?.id??""} booked ${booking.facilityId??""}'),
             subtitle: Text('Booking ID: ${booking.id}'),
           ),
         );

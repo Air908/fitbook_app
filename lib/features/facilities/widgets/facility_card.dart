@@ -28,9 +28,9 @@ class FacilityCard extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
-                child: facility.images.isNotEmpty
+                child: facility.images!.isNotEmpty
                     ? CachedNetworkImage(
-                  imageUrl: facility.images.first,
+                  imageUrl: facility.images?.first??"",
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
                     color: Colors.grey[200],
@@ -58,7 +58,7 @@ class FacilityCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          facility.name,
+                          facility.name??"",
                           style: Theme.of(context).textTheme.titleMedium,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -70,11 +70,11 @@ class FacilityCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getFacilityTypeColor(facility.facilityType),
+                          color: _getFacilityTypeColor(facility.facilityType??""),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          facility.facilityType.toUpperCase(),
+                          facility.facilityType?.toUpperCase()??"",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -105,7 +105,7 @@ class FacilityCard extends StatelessWidget {
                       const Icon(Icons.star, size: 16, color: Colors.amber),
                       const SizedBox(width: 4),
                       Text(
-                        '${facility.averageRating.toStringAsFixed(1)} (${facility.totalReviews})',
+                        '${facility.averageRating?.toStringAsFixed(1)} (${facility.totalReviews})',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const Spacer(),

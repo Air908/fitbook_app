@@ -1,10 +1,14 @@
-// admin_bloc.dart
-
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../booking/models/booking.dart';
+import '../../facilities/models/facility.dart';
+import '../../home/models/admin_alert.dart';
 
-// Events
+// EVENTS
 abstract class AdminEvent extends Equatable {
+  const AdminEvent();
+
   @override
   List<Object?> get props => [];
 }
@@ -12,25 +16,27 @@ abstract class AdminEvent extends Equatable {
 class LoadDashboardData extends AdminEvent {}
 
 class ApproveFacility extends AdminEvent {
-  final int facilityId;
+  final String facilityId;
 
-  ApproveFacility(this.facilityId);
+  const ApproveFacility(this.facilityId);
 
   @override
   List<Object?> get props => [facilityId];
 }
 
 class RejectFacility extends AdminEvent {
-  final int facilityId;
+  final String facilityId;
 
-  RejectFacility(this.facilityId);
+  const RejectFacility(this.facilityId);
 
   @override
   List<Object?> get props => [facilityId];
 }
 
-// States
+// STATES
 abstract class AdminState extends Equatable {
+  const AdminState();
+
   @override
   List<Object?> get props => [];
 }
@@ -44,7 +50,7 @@ class AdminLoaded extends AdminState {
   final List<Facility> pendingFacilities;
   final List<Booking> recentBookings;
 
-  AdminLoaded({
+  const AdminLoaded({
     required this.stats,
     required this.pendingFacilities,
     required this.recentBookings,
@@ -57,79 +63,80 @@ class AdminLoaded extends AdminState {
 class AdminError extends AdminState {
   final String message;
 
-  AdminError(this.message);
+  const AdminError(this.message);
 
   @override
   List<Object?> get props => [message];
 }
 
-// Bloc
+// BLOC
 class AdminBloc extends Bloc<AdminEvent, AdminState> {
-  AdminBloc() : super(AdminInitial()) {
-    on<LoadDashboardData>((event, emit) async {
-      emit(AdminLoading());
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-      // Fake delay and dummy data
-      await Future.delayed(Duration(seconds: 1));
+  AdminBloc() : super(AdminInitial()) {
+    on<LoadDashboardData>(_onLoadDashboardData);
+    on<ApproveFacility>(_onApproveFacility);
+    on<RejectFacility>(_onRejectFacility);
+  }
+
+  Future<void> _onLoadDashboardData(
+      LoadDashboardData event, Emitter<AdminState> emit) async {
+    emit(AdminLoading());
+
+    try {
+      final users = await _supabase.from('users').select();
+      final facilities = await _supabase.from('facilities').select();
+      final bookings = await _supabase
+          .from('bookings')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(5);
+
+      final pendingFacilities = await _supabase
+          .from('facilities')
+          .select()
+          .eq('is_approved', false);
 
       emit(AdminLoaded(
         stats: AdminStats(
-          totalUsers: 1200,
-          totalFacilities: 150,
-          totalBookings: 430,
-          totalRevenue: 755000,
+          totalUsers: users.length,
+          totalFacilities: facilities.length,
+          totalBookings: bookings.length,
+          totalRevenue: 0, pendingApprovals: 0, activeUsers: 0, // TODO: fetch revenue if stored
         ),
-        pendingFacilities: List.generate(3, (index) => Facility(id: index, name: 'Facility $index')),
-        recentBookings: List.generate(5, (index) => Booking(id: index, user: 'User $index', facility: 'Facility $index')),
+        pendingFacilities:
+        (pendingFacilities as List).map((f) => Facility.fromJson(f)).toList(),
+        recentBookings:
+        (bookings as List).map((b) => Booking.fromJson(b)).toList(),
       ));
-    });
-
-    on<ApproveFacility>((event, emit) {
-      // Handle approval logic
-    });
-
-    on<RejectFacility>((event, emit) {
-      // Handle rejection logic
-    });
+    } catch (e) {
+      emit(AdminError(e.toString()));
+    }
   }
-}
 
+  Future<void> _onApproveFacility(
+      ApproveFacility event, Emitter<AdminState> emit) async {
+    try {
+      await _supabase
+          .from('facilities')
+          .update({'is_approved': true})
+          .eq('id', event.facilityId);
+      add(LoadDashboardData());
+    } catch (e) {
+      emit(AdminError("Failed to approve facility: ${e.toString()}"));
+    }
+  }
 
-// Models
-class AdminStats extends Equatable {
-  final int totalUsers;
-  final int totalFacilities;
-  final int totalBookings;
-  final double totalRevenue;
-
-  AdminStats({
-    required this.totalUsers,
-    required this.totalFacilities,
-    required this.totalBookings,
-    required this.totalRevenue,
-  });
-
-  @override
-  List<Object?> get props => [totalUsers, totalFacilities, totalBookings, totalRevenue];
-}
-
-class Facility extends Equatable {
-  final int id;
-  final String name;
-
-  Facility({required this.id, required this.name});
-
-  @override
-  List<Object?> get props => [id, name];
-}
-
-class Booking extends Equatable {
-  final int id;
-  final String user;
-  final String facility;
-
-  Booking({required this.id, required this.user, required this.facility});
-
-  @override
-  List<Object?> get props => [id, user, facility];
+  Future<void> _onRejectFacility(
+      RejectFacility event, Emitter<AdminState> emit) async {
+    try {
+      await _supabase
+          .from('facilities')
+          .delete()
+          .eq('id', event.facilityId);
+      add(LoadDashboardData());
+    } catch (e) {
+      emit(AdminError("Failed to reject facility: ${e.toString()}"));
+    }
+  }
 }
