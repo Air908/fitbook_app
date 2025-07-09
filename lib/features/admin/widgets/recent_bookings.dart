@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../booking/models/booking.dart';
-import '../bloc/admin_bloc.dart'; // Make sure Booking model is accessible
+import '../bloc/admin_controller.dart'; // Make sure Booking model is accessible
 
 class RecentBookings extends StatelessWidget {
   final List<Booking> bookings;

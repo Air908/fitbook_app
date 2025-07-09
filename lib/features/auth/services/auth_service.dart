@@ -3,12 +3,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   final SupabaseClient _client = Supabase.instance.client;
 
+  /// Sign in with email and password
   Future<AuthResponse> signIn(String email, String password) async {
     try {
-      return await _client.auth.signInWithPassword(
+      final response = await _client.auth.signInWithPassword(
         email: email,
         password: password,
       );
+      return response;
     } on AuthException catch (e) {
       throw AuthException(e.message);
     } catch (e) {
@@ -16,12 +18,21 @@ class AuthService {
     }
   }
 
-  Future<AuthResponse> signUp(String email, String password, {String? fullName}) async {
+  /// Sign up with email, password, full name and role
+  Future<AuthResponse> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+    required String role,
+  }) async {
     try {
       return await _client.auth.signUp(
         email: email,
         password: password,
-        data: fullName != null ? {'full_name': fullName} : null,
+        data: {
+          'full_name': fullName,
+          'role': role,
+        },
       );
     } on AuthException catch (e) {
       throw AuthException(e.message);
@@ -30,6 +41,7 @@ class AuthService {
     }
   }
 
+  /// Sign out the current user
   Future<void> signOut() async {
     try {
       await _client.auth.signOut();
@@ -38,28 +50,7 @@ class AuthService {
     }
   }
 
-  bool get isLoggedIn => _client.auth.currentUser != null;
-
-  User? get currentUser => _client.auth.currentUser;
-
-  Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
-
-  // Get user session
-  Session? get currentSession => _client.auth.currentSession;
-
-  // Check if user email is confirmed
-  bool get isEmailConfirmed => currentUser?.emailConfirmedAt != null;
-
-  // Refresh session
-  Future<AuthResponse> refreshSession() async {
-    try {
-      return await _client.auth.refreshSession();
-    } catch (e) {
-      throw Exception('Session refresh failed: ${e.toString()}');
-    }
-  }
-
-  // Reset password
+  /// Reset password via email
   Future<void> resetPassword(String email) async {
     try {
       await _client.auth.resetPasswordForEmail(email);
@@ -69,4 +60,28 @@ class AuthService {
       throw Exception('Password reset failed: ${e.toString()}');
     }
   }
+
+  /// Refresh user session
+  Future<AuthResponse> refreshSession() async {
+    try {
+      return await _client.auth.refreshSession();
+    } catch (e) {
+      throw Exception('Session refresh failed: ${e.toString()}');
+    }
+  }
+
+  /// Returns the currently signed-in user
+  User? get currentUser => _client.auth.currentUser;
+
+  /// Returns the current user session
+  Session? get currentSession => _client.auth.currentSession;
+
+  /// Checks if the user is logged in
+  bool get isLoggedIn => currentUser != null;
+
+  /// Checks if the user's email is confirmed
+  bool get isEmailConfirmed => currentUser?.emailConfirmedAt != null;
+
+  /// Listen for auth state changes
+  Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 }

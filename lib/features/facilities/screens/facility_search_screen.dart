@@ -1,7 +1,6 @@
-// features/facilities/screens/facility_search_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/facility_bloc.dart';
+import 'package:get/get.dart';
+import '../bloc/facility_controller.dart';
 import '../models/facility.dart';
 import '../widgets/facility_card.dart';
 import '../widgets/search_filters.dart';
@@ -15,12 +14,7 @@ class FacilitySearchScreen extends StatefulWidget {
 
 class _FacilitySearchScreenState extends State<FacilitySearchScreen> {
   final _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    context.read<FacilityBloc>().add(LoadFacilities());
-  }
+  final FacilityController controller = Get.put(FacilityController());
 
   @override
   Widget build(BuildContext context) {
@@ -44,52 +38,45 @@ class _FacilitySearchScreenState extends State<FacilitySearchScreen> {
                 hintText: 'Search facilities...',
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (query) {
-                context.read<FacilityBloc>().add(
-                  SearchFacilities(query),
-                );
-              },
+              onChanged: controller.searchFacilities,
             ),
           ),
           Expanded(
-            child: BlocBuilder<FacilityBloc, FacilityState>(
-              builder: (context, state) {
-                if (state is FacilityLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (state is FacilityError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Error: ${state.message}'),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<FacilityBloc>().add(LoadFacilities());
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+              if (controller.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${controller.errorMessage.value}'),
+                      ElevatedButton(
+                        onPressed: controller.loadFacilities,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-                if (state is FacilityLoaded) {
-                  return ListView.builder(
-                    itemCount: state.facilities.length,
-                    itemBuilder: (context, index) {
-                      return FacilityCard(
-                        facility: state.facilities[index],
-                        onTap: () => _navigateToDetails(state.facilities[index]),
-                      );
-                    },
-                  );
-                }
-
+              if (controller.facilities.isEmpty) {
                 return const Center(child: Text('No facilities found'));
-              },
-            ),
+              }
+
+              return ListView.builder(
+                itemCount: controller.facilities.length,
+                itemBuilder: (context, index) {
+                  final facility = controller.facilities[index];
+                  return FacilityCard(
+                    facility: facility,
+                    onTap: () => _navigateToDetails(facility),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
@@ -104,6 +91,6 @@ class _FacilitySearchScreenState extends State<FacilitySearchScreen> {
   }
 
   void _navigateToDetails(Facility facility) {
-    // Navigate to facility details
+    Get.toNamed('/facility-details', arguments: facility);
   }
 }

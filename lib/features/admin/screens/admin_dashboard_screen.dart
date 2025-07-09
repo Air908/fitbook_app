@@ -1,24 +1,15 @@
 // features/admin/screens/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/admin_bloc.dart';
+import 'package:get/get.dart';
+import '../bloc/admin_controller.dart';
 import '../widgets/facility_approval_list.dart';
 import '../widgets/recent_bookings.dart';
 import '../widgets/stats_card.dart';
 
-class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({Key? key}) : super(key: key);
+class AdminDashboardScreen extends StatelessWidget {
+  AdminDashboardScreen({Key? key}) : super(key: key);
 
-  @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
-}
-
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<AdminBloc>().add(LoadDashboardData());
-  }
+  final AdminController controller = Get.put(AdminController());
 
   @override
   Widget build(BuildContext context) {
@@ -34,93 +25,87 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
-      body: BlocBuilder<AdminBloc, AdminState>(
-        builder: (context, state) {
-          if (state is AdminLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (state is AdminLoaded) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        if (controller.errorMessage.isNotEmpty) {
+          return Center(child: Text(controller.errorMessage.value));
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Stats Cards
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.5,
                 children: [
-                  // Stats Cards
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1.5,
-                    children: [
-                      StatsCard(
-                        title: 'Total Users',
-                        value: state.stats.totalUsers.toString(),
-                        icon: Icons.people,
-                        color: Colors.blue,
-                      ),
-                      StatsCard(
-                        title: 'Total Facilities',
-                        value: state.stats.totalFacilities.toString(),
-                        icon: Icons.business,
-                        color: Colors.green,
-                      ),
-                      StatsCard(
-                        title: 'Total Bookings',
-                        value: state.stats.totalBookings.toString(),
-                        icon: Icons.calendar_today,
-                        color: Colors.orange,
-                      ),
-                      StatsCard(
-                        title: 'Revenue',
-                        value: '₹${state.stats.totalRevenue.toStringAsFixed(0)}',
-                        icon: Icons.attach_money,
-                        color: Colors.purple,
-                      ),
-                    ],
+                  StatsCard(
+                    title: 'Total Users',
+                    value: controller.stats.value?.totalUsers.toString()??"0",
+                    icon: Icons.people,
+                    color: Colors.blue,
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Pending Facility Approvals
-                  Text(
-                    'Pending Facility Approvals',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                  StatsCard(
+                    title: 'Total Facilities',
+                    value: controller.stats.value?.totalFacilities.toString()??"0",
+                    icon: Icons.business,
+                    color: Colors.green,
                   ),
-                  const SizedBox(height: 16),
-                  FacilityApprovalList(
-                    facilities: state.pendingFacilities,
-                    onApprove: (facility) {
-                      context.read<AdminBloc>().add(
-                        ApproveFacility(facility?.id??""),
-                      );
-                    },
-                    onReject: (facility) {
-                      context.read<AdminBloc>().add(
-                        RejectFacility(facility?.id??""),
-                      );
-                    },
+                  StatsCard(
+                    title: 'Total Bookings',
+                    value: controller.stats.value?.totalBookings.toString()??"0",
+                    icon: Icons.calendar_today,
+                    color: Colors.orange,
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Recent Bookings
-                  Text(
-                    'Recent Bookings',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                  StatsCard(
+                    title: 'Revenue',
+                    value: '₹${controller.stats.value?.totalRevenue.toStringAsFixed(0)??"0"}',
+                    icon: Icons.attach_money,
+                    color: Colors.purple,
                   ),
-                  const SizedBox(height: 16),
-                  RecentBookings(bookings: state.recentBookings),
                 ],
               ),
-            );
-          }
 
-          return const Center(child: Text('Error loading dashboard'));
-        },
-      ),
+              const SizedBox(height: 24),
+
+              // Pending Facility Approvals
+              Text(
+                'Pending Facility Approvals',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              FacilityApprovalList(
+                facilities: controller.pendingFacilities,
+                onApprove: (facility) {
+                  controller.approveFacility(facility?.id ?? "");
+                },
+                onReject: (facility) {
+                  controller.rejectFacility(facility?.id ?? "");
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Recent Bookings
+              Text(
+                'Recent Bookings',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              RecentBookings(bookings: controller.recentBookings),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:supabase/supabase.dart';
+import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserProfileHeader extends StatelessWidget {
   final User user;
   final VoidCallback onProfileTap;
 
   const UserProfileHeader({
-    super.key,
+    Key? key,
     required this.user,
     required this.onProfileTap,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final email = user.email ?? 'Unknown';
+    final role = user.role ?? 'User';
+
     return Row(
       children: [
         CircleAvatar(
           radius: 28,
-          backgroundImage: user.email != null
-              ? NetworkImage(user.email!)
-              : const AssetImage('assets/images/avatar_placeholder.png')
-          as ImageProvider,
+          backgroundImage: const AssetImage('assets/images/avatar_placeholder.png'),
+          child: user.email == null
+              ? const Icon(Icons.person, size: 28, color: Colors.white)
+              : null,
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -28,13 +32,13 @@ class UserProfileHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                user.role ?? 'User',
+                role.capitalize ?? 'User',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
-                user.email??"",
+                email,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

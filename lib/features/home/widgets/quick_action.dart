@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
 
+/// Make sure this model is defined in a shared file or above this widget
+
 class QuickActions extends StatelessWidget {
   final List<QuickActionItem> actions;
   final Function(QuickActionItem) onActionTap;
@@ -14,6 +16,10 @@ class QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (actions.isEmpty) {
+      return const Center(child: Text("No quick actions available"));
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -26,6 +32,7 @@ class QuickActions extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         final action = actions[index];
+
         return InkWell(
           onTap: () => onActionTap(action),
           borderRadius: BorderRadius.circular(12),
@@ -45,7 +52,11 @@ class QuickActions extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(action.icon, size: 32, color: Theme.of(context).primaryColor),
+                Icon(
+                  action.icon,
+                  size: 32,
+                  color: Theme.of(context).primaryColor,
+                ),
                 const SizedBox(height: 10),
                 Text(
                   action.title,

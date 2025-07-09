@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../facilities/models/facility.dart';
-import '../bloc/admin_bloc.dart'; // Make sure the Facility model is accessible
+import '../bloc/admin_controller.dart'; // Make sure the Facility model is accessible
 
 class FacilityApprovalList extends StatelessWidget {
   final List<Facility> facilities;

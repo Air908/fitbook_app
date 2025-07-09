@@ -1,125 +1,74 @@
-// features/home/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/AppPreferences.dart';
 import '../../admin/widgets/recent_bookings.dart';
-import '../bloc/home_bloc.dart';
 import '../models/admin_alert.dart';
 import '../widgets/admin_alerts.dart';
 import '../widgets/admin_quick_stats.dart';
 import '../widgets/featured_facilities.dart';
 import '../widgets/quick_action.dart';
 import '../widgets/user_profile_header.dart';
+import '../bloc/home_controller.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class HomeScreen extends StatelessWidget {
+  HomeScreen({Key? key}) : super(key: key);
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<HomeBloc>().add(LoadHomeData());
-  }
+  final HomeController homeController = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<HomeBloc, HomeState>(
-        builder: (context, state) {
-          if (state is HomeLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Obx(() {
+        if (homeController.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (state is HomeLoaded) {
-            return _buildRoleBasedHome(state);
-          }
+        if (homeController.errorMessage.isNotEmpty) {
+          return _buildErrorState(context, homeController.errorMessage.value);
+        }
 
-          if (state is HomeError) {
-            return _buildErrorState(state.message);
-          }
-
-          return const Center(child: Text('Welcome to FitBook'));
-        },
-      ),
+        switch (homeController.userRole.value) {
+          case 'admin':
+            return _buildAdminHome(context);
+          case 'user':
+            return _buildUserHome(context);
+          default:
+            return _buildUserHome(context);
+        }
+      }),
     );
   }
 
-  Widget _buildRoleBasedHome(HomeLoaded state) {
-    switch (state.currentUser?.role?.toLowerCase()) {
-      case "admin":
-        return _buildAdminHome(state);
-      case "user":
-        return _buildUserHome(state);
-      default:
-        return _buildGuestHome();
-    }
-  }
-
-  Widget _buildAdminHome(HomeLoaded state) {
+  Widget _buildAdminHome(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: () async {
-        context.read<HomeBloc>().add(RefreshHomeData());
-      },
+      onRefresh: homeController.refreshHomeData,
       child: CustomScrollView(
         slivers: [
-          _buildAdminAppBar(state),
+          _buildAdminAppBar(context),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Admin Quick Stats
                   AdminQuickStats(
-                    stats: state.adminStats,
-                    onStatsCardTap: (statType) {
-                      _navigateToAdminSection(statType);
-                    },
+                    onStatsCardTap: _navigateToAdminSection,
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Admin Alerts
                   AdminAlerts(
-                    alerts: state.adminAlerts!,
-                    onAlertTap: (alert) {
-                      _handleAdminAlert(alert);
-                    },
+                    alerts: homeController.adminAlerts,
+                    onAlertTap: _handleAdminAlert,
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Quick Admin Actions
-                  Text(
-                    'Quick Actions',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  _buildSectionTitle(context, 'Quick Actions'),
                   QuickActions(
                     actions: _getAdminActions(),
-                    onActionTap: (action) {
-                      _handleAdminAction(action);
-                    },
+                    onActionTap: _handleAdminAction,
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Recent Activity
-                  Text(
-                    'Recent Activity',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  RecentBookings(
-                    bookings: state.recentBookings,
-                  ),
+                  _buildSectionTitle(context, 'Recent Activity'),
+                  RecentBookings(bookings: homeController.recentBookings),
                 ],
               ),
             ),
@@ -129,80 +78,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildUserHome(HomeLoaded state) {
+  Widget _buildUserHome(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: () async {
-        context.read<HomeBloc>().add(RefreshHomeData());
-      },
+      onRefresh: homeController.refreshHomeData,
       child: CustomScrollView(
         slivers: [
-          _buildUserAppBar(state),
+          _buildUserAppBar(context),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // User Profile Header
                   UserProfileHeader(
-                    user: state.currentUser!,
-                    onProfileTap: () {
-                      Navigator.pushNamed(context, '/profile');
-                    },
+                    user: homeController.currentUser.value!,
+                    onProfileTap: () => Get.toNamed('/profile'),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Quick Actions
-                  Text(
-                    'Quick Actions',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  _buildSectionTitle(context, 'Quick Actions'),
                   QuickActions(
                     actions: _getUserActions(),
-                    onActionTap: (action) {
-                      _handleUserAction(action);
-                    },
+                    onActionTap: _handleUserAction,
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Featured Facilities
-                  Text(
-                    'Featured Facilities',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  _buildSectionTitle(context, 'Featured Facilities'),
                   FeaturedFacilities(
-                    facilities: state.featuredFacilities,
-                    onFacilityTap: (facility) {
-                      Navigator.pushNamed(
-                        context,
-                        '/facility-details',
-                        arguments: facility,
-                      );
-                    },
+                    facilities: homeController.featuredFacilities,
+                    onFacilityTap: (facility) => Get.toNamed(
+                      '/facility-details',
+                      arguments: facility,
+                    ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Recent Bookings
-                  if (state.recentBookings.isNotEmpty) ...[
-                    Text(
-                      'Your Recent Bookings',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    RecentBookings(
-                      bookings: state.recentBookings,
-                    ),
+                  if (homeController.recentBookings.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Your Recent Bookings'),
+                    RecentBookings(bookings: homeController.recentBookings),
                   ],
                 ],
               ),
@@ -213,38 +123,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGuestHome() {
+  Widget _buildGuestHome(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.fitness_center,
-              size: 80,
-              color: Theme.of(context).primaryColor,
-            ),
+            Icon(Icons.fitness_center, size: 80, color: Theme.of(context).primaryColor),
             const SizedBox(height: 24),
             Text(
               'Welcome to FitBook',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Text(
               'Book your favorite sports facilities with ease',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey[600],
-              ),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/login');
-              },
+              onPressed: () => Get.toNamed('/login'),
               child: const Text('Get Started'),
             ),
           ],
@@ -253,29 +153,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAdminAppBar(HomeLoaded state) {
+  Widget _buildAdminAppBar(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 120,
-      floating: false,
       pinned: true,
       backgroundColor: Theme.of(context).primaryColor,
-      flexibleSpace: FlexibleSpaceBar(
-        title: const Text(
-          'Admin Dashboard',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        background: Container(
+      flexibleSpace: const FlexibleSpaceBar(
+        title: Text('Admin Dashboard', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        background: DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Theme.of(context).primaryColor,
-                Theme.of(context).primaryColor.withOpacity(0.8),
-              ],
+              colors: [Colors.blue, Color(0xFF1976D2)],
             ),
           ),
         ),
@@ -283,43 +173,32 @@ class _HomeScreenState extends State<HomeScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications, color: Colors.white),
-          onPressed: () {
-            Navigator.pushNamed(context, '/notifications');
-          },
+          onPressed: () => Get.toNamed('/notifications'),
         ),
         IconButton(
           icon: const Icon(Icons.settings, color: Colors.white),
-          onPressed: () {
-            Navigator.pushNamed(context, '/admin-settings');
-          },
+          onPressed: () => Get.toNamed('/admin-settings'),
         ),
       ],
     );
   }
 
-  Widget _buildUserAppBar(HomeLoaded state) {
+  Widget _buildUserAppBar(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 120,
-      floating: false,
       pinned: true,
       backgroundColor: Theme.of(context).primaryColor,
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
-          'Hello, ${state.currentUser?.email ?? 'User'}!',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          'Hello, ${homeController.currentUser.value?.email ?? 'User'}!',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
+              colors: [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withOpacity(0.8)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Theme.of(context).primaryColor,
-                Theme.of(context).primaryColor.withOpacity(0.8),
-              ],
             ),
           ),
         ),
@@ -327,148 +206,94 @@ class _HomeScreenState extends State<HomeScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.search, color: Colors.white),
-          onPressed: () {
-            Navigator.pushNamed(context, '/search');
-          },
+          onPressed: () => Get.toNamed('/search'),
         ),
         IconButton(
           icon: const Icon(Icons.notifications, color: Colors.white),
-          onPressed: () {
-            Navigator.pushNamed(context, '/notifications');
-          },
+          onPressed: () => Get.toNamed('/notifications'),
         ),
       ],
     );
   }
 
-  Widget _buildErrorState(String message) {
+  Widget _buildErrorState(BuildContext context, String message) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Oops! Something went wrong',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[600],
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+            const SizedBox(height: 16),
+            Text('Oops! Something went wrong', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              context.read<HomeBloc>().add(LoadHomeData());
-            },
-            child: const Text('Retry'),
-          ),
-        ],
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () async {
+                // 2. Sign out from Supabase (optional but good practice)
+                await Supabase.instance.client.auth.signOut();
+
+                // 1. Clear stored user session
+                await AppPreferences.init();
+                await AppPreferences.clear();
+
+                // 3. Navigate to login screen
+                Get.offAllNamed('/login');
+              },
+              child: const Text('Retry Login'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  List<QuickActionItem> _getAdminActions() {
-    return [
-      QuickActionItem(
-        icon: Icons.approval,
-        title: 'Approve Facilities',
-        subtitle: 'Review pending facilities',
-        actionType: AdminActionType.approveFacilities,
-      ),
-      QuickActionItem(
-        icon: Icons.people_outline,
-        title: 'Manage Users',
-        subtitle: 'User management',
-        actionType: AdminActionType.manageUsers,
-      ),
-      QuickActionItem(
-        icon: Icons.analytics,
-        title: 'View Reports',
-        subtitle: 'Analytics & insights',
-        actionType: AdminActionType.viewReports,
-      ),
-      QuickActionItem(
-        icon: Icons.settings,
-        title: 'System Settings',
-        subtitle: 'App configuration',
-        actionType: AdminActionType.systemSettings,
-      ),
-    ];
-  }
-
-  List<QuickActionItem> _getUserActions() {
-    return [
-      QuickActionItem(
-        icon: Icons.search,
-        title: 'Find Facilities',
-        subtitle: 'Search nearby facilities',
-        actionType: UserActionType.searchFacilities,
-      ),
-      QuickActionItem(
-        icon: Icons.calendar_today,
-        title: 'My Bookings',
-        subtitle: 'View your bookings',
-        actionType: UserActionType.viewBookings,
-      ),
-      QuickActionItem(
-        icon: Icons.favorite,
-        title: 'Favorites',
-        subtitle: 'Your saved facilities',
-        actionType: UserActionType.viewFavorites,
-      ),
-      QuickActionItem(
-        icon: Icons.person,
-        title: 'Profile',
-        subtitle: 'Manage your profile',
-        actionType: UserActionType.manageProfile,
-      ),
-    ];
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+    );
   }
 
   void _navigateToAdminSection(AdminStatType statType) {
     switch (statType) {
       case AdminStatType.users:
-        Navigator.pushNamed(context, '/admin/users');
+        Get.toNamed('/admin/users');
         break;
       case AdminStatType.facilities:
-        Navigator.pushNamed(context, '/admin/facilities');
+        Get.toNamed('/admin/facilities');
         break;
       case AdminStatType.bookings:
-        Navigator.pushNamed(context, '/admin/bookings');
+        Get.toNamed('/admin/bookings');
         break;
       case AdminStatType.revenue:
-        Navigator.pushNamed(context, '/admin/revenue');
+        Get.toNamed('/admin/revenue');
         break;
     }
   }
 
   void _handleAdminAlert(AdminAlert alert) {
-    // Handle admin alert tap
-    Navigator.pushNamed(context, '/admin/alerts', arguments: alert);
+    Get.toNamed('/admin/alerts', arguments: alert);
   }
 
   void _handleAdminAction(QuickActionItem action) {
     switch (action.actionType) {
       case AdminActionType.approveFacilities:
-        Navigator.pushNamed(context, '/admin/facility-approvals');
+        Get.toNamed('/admin/facility-approvals');
         break;
       case AdminActionType.manageUsers:
-        Navigator.pushNamed(context, '/admin/users');
+        Get.toNamed('/admin/users');
         break;
       case AdminActionType.viewReports:
-        Navigator.pushNamed(context, '/admin/reports');
+        Get.toNamed('/admin/reports');
         break;
       case AdminActionType.systemSettings:
-        Navigator.pushNamed(context, '/admin/settings');
+        Get.toNamed('/admin/settings');
         break;
     }
   }
@@ -476,22 +301,76 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleUserAction(QuickActionItem action) {
     switch (action.actionType) {
       case UserActionType.searchFacilities:
-        Navigator.pushNamed(context, '/search');
+        Get.toNamed('/search');
         break;
       case UserActionType.viewBookings:
-        Navigator.pushNamed(context, '/bookings');
+        Get.toNamed('/bookings');
         break;
       case UserActionType.viewFavorites:
-        Navigator.pushNamed(context, '/favorites');
+        Get.toNamed('/favorites');
         break;
       case UserActionType.manageProfile:
-        Navigator.pushNamed(context, '/profile');
+        Get.toNamed('/profile');
         break;
     }
   }
+
+  List<QuickActionItem> _getAdminActions() => [
+    QuickActionItem(
+      icon: Icons.approval,
+      title: 'Approve Facilities',
+      subtitle: 'Review pending facilities',
+      actionType: AdminActionType.approveFacilities,
+    ),
+    QuickActionItem(
+      icon: Icons.people_outline,
+      title: 'Manage Users',
+      subtitle: 'User management',
+      actionType: AdminActionType.manageUsers,
+    ),
+    QuickActionItem(
+      icon: Icons.analytics,
+      title: 'View Reports',
+      subtitle: 'Analytics & insights',
+      actionType: AdminActionType.viewReports,
+    ),
+    QuickActionItem(
+      icon: Icons.settings,
+      title: 'System Settings',
+      subtitle: 'App configuration',
+      actionType: AdminActionType.systemSettings,
+    ),
+  ];
+
+  List<QuickActionItem> _getUserActions() => [
+    QuickActionItem(
+      icon: Icons.search,
+      title: 'Find Facilities',
+      subtitle: 'Search nearby facilities',
+      actionType: UserActionType.searchFacilities,
+    ),
+    QuickActionItem(
+      icon: Icons.calendar_today,
+      title: 'My Bookings',
+      subtitle: 'View your bookings',
+      actionType: UserActionType.viewBookings,
+    ),
+    QuickActionItem(
+      icon: Icons.favorite,
+      title: 'Favorites',
+      subtitle: 'Your saved facilities',
+      actionType: UserActionType.viewFavorites,
+    ),
+    QuickActionItem(
+      icon: Icons.person,
+      title: 'Profile',
+      subtitle: 'Manage your profile',
+      actionType: UserActionType.manageProfile,
+    ),
+  ];
 }
 
-// Supporting Models and Enums
+// Models & Enums
 class QuickActionItem {
   final IconData icon;
   final String title;
@@ -506,23 +385,8 @@ class QuickActionItem {
   });
 }
 
-enum AdminActionType {
-  approveFacilities,
-  manageUsers,
-  viewReports,
-  systemSettings,
-}
+enum AdminActionType { approveFacilities, manageUsers, viewReports, systemSettings }
 
-enum UserActionType {
-  searchFacilities,
-  viewBookings,
-  viewFavorites,
-  manageProfile,
-}
+enum UserActionType { searchFacilities, viewBookings, viewFavorites, manageProfile }
 
-enum AdminStatType {
-  users,
-  facilities,
-  bookings,
-  revenue,
-}
+enum AdminStatType { users, facilities, bookings, revenue }

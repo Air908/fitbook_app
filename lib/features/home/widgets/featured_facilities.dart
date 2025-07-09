@@ -1,5 +1,5 @@
-// features/home/widgets/featured_facilities.dart
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../facilities/models/facility.dart';
 
 class FeaturedFacilities extends StatelessWidget {
@@ -27,6 +27,14 @@ class FeaturedFacilities extends StatelessWidget {
         itemCount: facilities.length,
         itemBuilder: (context, index) {
           final facility = facilities[index];
+
+          final imageUrl = (facility.images?.isNotEmpty ?? false)
+              ? facility.images!.first
+              : null;
+
+          final facilityName = facility.name ?? 'Unnamed Facility';
+          final location = facility.location ?? 'Unknown Location';
+
           return Container(
             width: 300,
             margin: const EdgeInsets.only(right: 16),
@@ -41,24 +49,19 @@ class FeaturedFacilities extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Facility Image
+                    // Facility Image or Placeholder
                     Expanded(
                       flex: 3,
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(8),
-                          ),
-                          image: DecorationImage(
-                            image: NetworkImage(
-                              facility.images!.isNotEmpty
-                                  ? facility.images!.first
-                                  : 'https://via.placeholder.com/300x120',
-                            ),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        child: imageUrl != null
+                            ? Image.network(
+                          imageUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildImageError(),
+                        )
+                            : _buildImageError(),
                       ),
                     ),
                     // Facility Info
@@ -70,7 +73,7 @@ class FeaturedFacilities extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              facility?.name??"",
+                              facilityName,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -79,14 +82,22 @@ class FeaturedFacilities extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              facility.location ?? 'No location info',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: Colors.grey[600]),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    location,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: Colors.grey[600]),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -98,6 +109,19 @@ class FeaturedFacilities extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildImageError() {
+    return Container(
+      width: double.infinity,
+      color: Colors.grey[300],
+      alignment: Alignment.center,
+      child: const Icon(
+        FontAwesomeIcons.triangleExclamation,
+        color: Colors.redAccent,
+        size: 32,
       ),
     );
   }
