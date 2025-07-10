@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/environment.dart';
+import 'core/routers/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routers/router.dart';
 
@@ -52,9 +53,13 @@ class SplashScreen extends StatelessWidget {
     await Future.delayed(const Duration(seconds: 2));
 
     if (session != null && session.user != null) {
-      Get.offAllNamed('/home');
-    } else {
-      Get.offAllNamed('/login');
+  if(session.user!.userMetadata?['role'] == 'admin'|| session.user!.userMetadata?['role'] == 'sub_admin'){
+    Get.offAllNamed(AppRoutes.adminDashboard);
+  } else {
+  Get.offAllNamed(AppRoutes.home);
+  }
+} else {
+      Get.offAllNamed(AppRoutes.login);
     }
   }
 

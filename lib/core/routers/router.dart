@@ -9,6 +9,7 @@ import 'package:fitbook/features/facilities/models/facility.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/facilities/screens/FacilityDetailsScreen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import '../middleware/admin_guard.dart';
 
 class AppPages {
@@ -33,5 +34,6 @@ class AppPages {
       page: () =>  AdminDashboardScreen(),
       middlewares: [AdminGuard()],
     ),
+    GetPage(name: AppRoutes.profile, page: () =>  ProfileScreen()),
   ];
 }

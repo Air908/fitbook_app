@@ -1,6 +1,10 @@
+import 'dart:ffi';
+
+import 'package:fitbook/core/routers/app_routes.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/AppPreferences.dart';
+import '../../admin/screens/admin_dashboard_screen.dart';
 import '../../booking/models/booking.dart';
 import '../../facilities/models/facility.dart';
 import '../models/admin_alert.dart';
@@ -12,7 +16,7 @@ class HomeController extends GetxController {
   var isLoading = false.obs;
   var errorMessage = ''.obs;
 
-  var userRole = 'guest'.obs;
+  var userRole = 'user'.obs;
   var currentUser = Rxn<User>();
   var featuredFacilities = <Facility>[].obs;
   var recentBookings = <Booking>[].obs;
@@ -31,10 +35,11 @@ class HomeController extends GetxController {
 
     try {
       /// ✅ Load user info from Shared Preferences
-      final isLoggedIn = AppPreferences.getValue<bool>(AppPreferences.keyIsLoggedIn) ?? false;
+      final isLoggedIn =
+         await AppPreferences.getValue<bool>(AppPreferences.keyIsLoggedIn)?? false;
 
       if (!isLoggedIn) {
-        userRole.value = 'guest';
+        userRole.value = 'user';
         currentUser.value = null;
         featuredFacilities.clear();
         recentBookings.clear();
@@ -48,13 +53,13 @@ class HomeController extends GetxController {
       final role = AppPreferences.getValue<String>(AppPreferences.keyUserRole);
       final email = AppPreferences.getValue<String>(AppPreferences.keyUserEmail);
 
-      userRole.value = role?.toLowerCase() ?? 'user';
+      userRole.value = role.toString() ?? 'user';
 
       /// Note: Supabase `User` object is nullable. You can just store basic values from prefs.
       currentUser.value = Supabase.instance.client.auth.currentUser;
 
-      if (userRole.value == 'admin') {
-        await _loadAdminData(currentUser.value!);
+      if (userRole.value.toLowerCase() == 'admin') {
+        Get.toNamed(AppRoutes.adminDashboard);
       } else {
         await _loadUserData(currentUser.value!);
       }
@@ -91,13 +96,22 @@ class HomeController extends GetxController {
   }
 
   Future<List<Facility>> _fetchFeaturedFacilities() async {
-    final response = await _supabase
-        .from('facilities')
-        .select()
-        .eq('is_featured', true)
-        .eq('is_active', true);
+    try {
+      final response = await _supabase
+          .from('facilities')
+          .select()
+          .eq('is_featured', true)
+          .eq('is_active', true);
 
-    return (response as List).map((f) => Facility.fromJson(f)).toList();
+      if (response == null || (response as List).isEmpty) {
+        return [];
+      }
+
+      return response.map((f) => Facility.fromJson(f)).toList();
+    } catch (e) {
+      // Optionally log the error
+      return [];
+    }
   }
 
   Future<List<Booking>> _fetchRecentBookings(String userId) async {

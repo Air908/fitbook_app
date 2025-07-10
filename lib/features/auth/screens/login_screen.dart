@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/routers/app_routes.dart';
 import '../bloc/AuthController.dart';
 import '../models/auth_status.dart';
 import '../widgets/auth_background.dart';
@@ -59,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     }
   }
 
-  void _navigateToSignup() => Get.toNamed('/signup');
+  void _navigateToSignup() => Get.toNamed(AppRoutes.signup);
   void _navigateToForgotPassword() => Get.toNamed('/forgot-password');
   void _googleLogin() {}
 
@@ -72,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         // ✅ Navigate to home on authenticated
         if (state is AuthAuthenticated) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Get.offAllNamed('/home', arguments: state.user);
+            Get.offAllNamed(AppRoutes.home, arguments: state.user);
           });
         }
 

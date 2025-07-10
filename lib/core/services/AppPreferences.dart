@@ -12,14 +12,14 @@ class AppPreferences {
   static const String keyAvatarUrl = 'avatar_url';
   static const String keyAuthToken = 'auth_token';
 
-  /// Initialize preferences (call in `main()`)
-  static Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+  /// Ensure SharedPreferences is initialized
+  static Future<void> _ensureInitialized() async {
+    _prefs ??= await SharedPreferences.getInstance();
   }
 
-  /// Set value based on type
+  /// Set value based on type (auto-initialize)
   static Future<void> setValue<T>(String key, T value) async {
-    if (_prefs == null) throw Exception("Preferences not initialized");
+    await _ensureInitialized();
 
     if (value is bool) {
       await _prefs!.setBool(key, value);
@@ -36,26 +36,24 @@ class AppPreferences {
     }
   }
 
-  /// Get value with default fallback
-  static T? getValue<T>(String key, {T? defaultValue}) {
-    if (_prefs == null) throw Exception("Preferences not initialized");
+  /// Get value with default fallback (auto-initialize)
+  static Future<T?> getValue<T>(String key, {T? defaultValue}) async {
+    await _ensureInitialized();
 
     final value = _prefs!.get(key);
-    if (value is T) {
-      return value;
-    }
+    if (value is T) return value;
     return defaultValue;
   }
 
-  /// Remove a specific key
+  /// Remove key (auto-initialize)
   static Future<void> remove(String key) async {
-    if (_prefs == null) throw Exception("Preferences not initialized");
+    await _ensureInitialized();
     await _prefs!.remove(key);
   }
 
-  /// Clear all keys
+  /// Clear all (auto-initialize)
   static Future<void> clear() async {
-    if (_prefs == null) throw Exception("Preferences not initialized");
+    await _ensureInitialized();
     await _prefs!.clear();
   }
 }

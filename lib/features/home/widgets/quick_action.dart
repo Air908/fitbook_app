@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
 
-/// Make sure this model is defined in a shared file or above this widget
-
 class QuickActions extends StatelessWidget {
   final List<QuickActionItem> actions;
   final Function(QuickActionItem) onActionTap;
@@ -26,54 +24,52 @@ class QuickActions extends StatelessWidget {
       itemCount: actions.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 2.2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 2.0,
       ),
       itemBuilder: (context, index) {
         final action = actions[index];
 
-        return InkWell(
-          onTap: () => onActionTap(action),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  action.icon,
-                  size: 32,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  action.title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+        return Material(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(8),
+          elevation: 2,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => onActionTap(action),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                    radius: 20,
+                    child: Icon(
+                      action.icon,
+                      size: 28,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  action.subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
+                  const SizedBox(height: 12),
+                  Text(
+                    action.title.isNotEmpty ? action.title : 'Untitled',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    action.subtitle.isNotEmpty ? action.subtitle : 'No description',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
         );

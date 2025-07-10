@@ -5,4 +5,6 @@ class AppRoutes {
   static const home = '/home';
   static const adminDashboard = '/admin-dashboard';
   static const facilityDetails = '/facility-details';
+  static const profile = '/profile';
+
 }

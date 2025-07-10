@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../core/routers/app_routes.dart';
 import '../bloc/AuthController.dart';
 import '../models/auth_status.dart';
 import '../widgets/auth_text_field.dart';
@@ -81,7 +82,7 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
             } else if (state is AuthFailure) {
               Get.snackbar('Error', state.message, backgroundColor: Colors.red, colorText: Colors.white);
             } else if (state is AuthAuthenticated) {
-              Get.offAllNamed('/home');
+              Get.offAllNamed(AppRoutes.home);
             }
           });
 
