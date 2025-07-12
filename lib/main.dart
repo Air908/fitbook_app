@@ -53,10 +53,15 @@ class SplashScreen extends StatelessWidget {
     await Future.delayed(const Duration(seconds: 2));
 
     if (session != null && session.user != null) {
-  if(session.user!.userMetadata?['role'] == 'admin'|| session.user!.userMetadata?['role'] == 'sub_admin'){
+  if(session.user!.userMetadata?['role'] == 'admin'){
     Get.offAllNamed(AppRoutes.adminDashboard);
-  } else {
+  } else if( session.user!.userMetadata?['role'] == 'sub_admin') {
+    Get.offAllNamed(AppRoutes.subAdminDashboard);
+  }
+  else if (session.user!.userMetadata?['role'] == 'user') {
   Get.offAllNamed(AppRoutes.home);
+  } else {
+    Get.offAllNamed(AppRoutes.login);
   }
 } else {
       Get.offAllNamed(AppRoutes.login);

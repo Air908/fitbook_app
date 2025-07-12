@@ -82,7 +82,7 @@ class AuthController extends GetxController {
 
       final user = response.user;
       if (user != null) {
-        final avatarUrl = role.toLowerCase() == 'admin'
+        final avatarUrl = role.toLowerCase() == 'admin' || role.toLowerCase() == 'sub_admin'
             ? 'https://fphhmcvualvnknqixmwd.supabase.co/storage/v1/object/public/images/adminUser.png'
             : 'https://fphhmcvualvnknqixmwd.supabase.co/storage/v1/object/public/images/defaultUser.jpg';
 

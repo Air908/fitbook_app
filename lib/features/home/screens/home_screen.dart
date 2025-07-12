@@ -31,15 +31,24 @@ class HomeScreen extends StatelessWidget {
 
         final role = homeController.userRole.value;
 
-        if (role == 'admin' || role == 'sub_admin') {
+        if (role == 'admin') {
           // Defer navigation until after build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Get.offAllNamed(AppRoutes.adminDashboard);
           });
           // Return a temporary widget
           return const Center(child: CircularProgressIndicator());
+        } else if (role=='sub_admin') {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Get.offAllNamed(AppRoutes.subAdminDashboard);
+          });
+          return const Center(child: CircularProgressIndicator());
+        } else{
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Get.offAllNamed(AppRoutes.userHome);
+          });
         }
-        return _buildUserHome(context);
+        return const Center(child: CircularProgressIndicator());
       }),
     );
   }

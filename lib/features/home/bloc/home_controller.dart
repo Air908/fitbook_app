@@ -84,18 +84,18 @@ class HomeController extends GetxController {
   }
 
   Future<void> _loadAdminData(User user) async {
-    featuredFacilities.value = await _fetchFeaturedFacilities();
+    featuredFacilities.value = await fetchFeaturedFacilities();
     recentBookings.value = await _fetchRecentBookings(user.id);
     adminStats.value = await _fetchAdminStats();
     adminAlerts.value = await _fetchAdminAlerts();
   }
 
   Future<void> _loadUserData(User user) async {
-    featuredFacilities.value = await _fetchFeaturedFacilities();
+    featuredFacilities.value = await fetchFeaturedFacilities();
     recentBookings.value = await _fetchRecentBookings(user.id);
   }
 
-  Future<List<Facility>> _fetchFeaturedFacilities() async {
+  Future<List<Facility>> fetchFeaturedFacilities() async {
     try {
       final response = await _supabase
           .from('facilities')
