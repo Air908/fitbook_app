@@ -43,9 +43,13 @@ class HomeScreen extends StatelessWidget {
             Get.offAllNamed(AppRoutes.subAdminDashboard);
           });
           return const Center(child: CircularProgressIndicator());
-        } else{
+        } else if (role == 'user'){
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Get.offAllNamed(AppRoutes.userHome);
+          });
+        } else {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Get.offAllNamed(AppRoutes.login);
           });
         }
         return const Center(child: CircularProgressIndicator());
@@ -53,82 +57,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserHome(BuildContext context) {
-    final user = homeController.currentUser.value;
-
-    return RefreshIndicator(
-      onRefresh: homeController.refreshHomeData,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const SizedBox(height: 16),
-          if (user != null)
-            Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: UserProfileHeader(
-                  user: user,
-                  onProfileTap: () => Get.toNamed('/profile'),
-                ),
-              ),
-            ),
-
-          const SizedBox(height: 24),
-          _sectionHeader(context, 'Quick Actions'),
-          const SizedBox(height: 12),
-          QuickActions(
-            actions: _getUserActions(),
-            onActionTap: _handleUserAction,
-          ),
-
-          const SizedBox(height: 32),
-          _sectionHeader(context, 'Featured Facilities'),
-          const SizedBox(height: 12),
-          FeaturedFacilities(
-            facilities: homeController.featuredFacilities,
-            onFacilityTap: (facility) => Get.toNamed('/facility-details', arguments: facility),
-          ),
-
-          const SizedBox(height: 32),
-          _sectionHeader(context, 'Your Recent Bookings'),
-          const SizedBox(height: 12),
-          homeController.recentBookings.isNotEmpty
-              ? RecentBookings(bookings: homeController.recentBookings)
-              : Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white,
-            ),
-            child: Center(
-              child: Text(
-                'No recent bookings found.',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionHeader(BuildContext context, String title) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: const Text('See All'),
-        ),
-      ],
-    );
-  }
 
   Widget _buildErrorState(BuildContext context, String message) {
     return Center(
@@ -160,23 +88,6 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _handleUserAction(QuickActionItem action) {
-    switch (action.actionType) {
-      case UserActionType.searchFacilities:
-        Get.toNamed('/search');
-        break;
-      case UserActionType.viewBookings:
-        Get.toNamed('/bookings');
-        break;
-      case UserActionType.viewFavorites:
-        Get.toNamed('/favorites');
-        break;
-      case UserActionType.manageProfile:
-        Get.toNamed('/profile');
-        break;
-    }
   }
 
   List<QuickActionItem> _getUserActions() => [
